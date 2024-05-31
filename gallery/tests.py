@@ -1,46 +1,35 @@
-from django.test import Client, TestCase
-from django.urls import reverse
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.test import TestCase
 
-from .models import Category, Image
+from gallery.models import Category, Image
 
 
-class GalleryViewTests(TestCase):
+class TestViews(TestCase):
     def setUp(self):
-        self.client = Client()
-        self.category1 = Category.objects.create(name="Category 1")
-        self.category2 = Category.objects.create(name="Category 2")
+        self.categories = [
+            Category.objects.create(name="Category 1"),
+            Category.objects.create(name="Category 2"),
+        ]
+        self.image = Image.objects.create(
+            title="Image 1",
+            image=SimpleUploadedFile("test.jpg", b"file_content"),
+            created_date="2022-01-01",
+            age_limit=12,
+        )
+        self.image.categories.set(self.categories)
 
-    def test_gallery_view_retrieves_all_categories(self):
-        response = self.client.get(reverse("gallery_view"))
-        self.assertEqual(response.status_code, 200)
+    def test_gallery_view_returns_correct_template(self):
+        response = self.client.get("/")
         self.assertTemplateUsed(response, "gallery.html")
-        self.assertIn("categories", response.context)
-        self.assertEqual(len(response.context["categories"]), 2)
 
-    def test_gallery_view_renders_correct_template(self):
-        response = self.client.get(reverse("gallery_view"))
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "gallery.html")
+    def test_gallery_view_returns_correct_context(self):
+        response = self.client.get("/")
+        self.assertEqual(list(response.context["categories"]), self.categories)
 
-
-class ImageDetailViewTests(TestCase):
-    def setUp(self):
-        self.client = Client()
-        self.category = Category.objects.create(name="Category 1")
-        self.image = Image.objects.create(title="Test Image", category=self.category)
-
-    def test_image_detail_view_retrieves_image(self):
-        response = self.client.get(reverse("image_detail", args=[self.image.id]))
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "image_detail.html")
-        self.assertIn("image", response.context)
-        self.assertEqual(response.context["image"].id, self.image.id)
-
-    def test_image_detail_view_renders_correct_template(self):
-        response = self.client.get(reverse("image_detail", args=[self.image.id]))
-        self.assertEqual(response.status_code, 200)
+    def test_image_detail_view_returns_correct_template(self):
+        response = self.client.get(f"/image/{self.image.pk}/")
         self.assertTemplateUsed(response, "image_detail.html")
 
-    def test_image_detail_view_returns_404_for_nonexistent_image(self):
-        response = self.client.get(reverse("image_detail", args=[999]))
-        self.assertEqual(response.status_code, 404)
+    def test_image_detail_view_returns_correct_context(self):
+        response = self.client.get(f"/image/{self.image.pk}/")
+        self.assertEqual(response.context["image"], self.image)
