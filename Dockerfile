@@ -20,3 +20,4 @@ RUN python manage.py createsuperuser \
         --username $DJANGO_SUPERUSER_USERNAME \
         --email $DJANGO_SUPERUSER_EMAIL
 
+CMD python manage.py runserver 0.0.0.0:$PORT
