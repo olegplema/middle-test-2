@@ -12,12 +12,12 @@ EXPOSE $PORT
 
 RUN python manage.py migrate
 
-ENV ADMIN_USERNAME=admin1
-ENV ADMIN_EMAIL=admin1@gmail.com
+ENV DJANGO_SUPERUSER_USERNAME=admin1
+ENV DJANGO_SUPERUSER_EMAIL=admin1@gmail.com
 
 RUN python manage.py createsuperuser \
         --noinput \
-        --username $ADMIN_USERNAME \
-        --email $ADMIN_EMAIL
+        --username $DJANGO_SUPERUSER_USERNAME \
+        --email $DJANGO_SUPERUSER_EMAIL
 
 CMD python manage.py runserver 0.0.0.0:$PORT
